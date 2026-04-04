@@ -3,7 +3,7 @@
 
 // ── Configuration ────────────────────────────────────────────────────────────
 
-export type PlateType = '96' | '384';
+export type PlateType = '96' | '384' | '1536';
 export type SortMode = 'STRAIGHT_DOWN' | 'FOUR_WAY';
 
 export interface SorterConfig {
@@ -13,6 +13,8 @@ export interface SorterConfig {
   targetSortRate: number;      // events/sec the instrument achieves (150 from paper)
   dropSpacing: number;         // abort threshold for adjacent drops (32 = default)
   speedMultiplier: number;     // simulation speed (1 = real time, 5 = 5× faster)
+  advancedSortMode: boolean;   // when true, only sort into selectedWells
+  selectedWells: number[] | null; // null = all wells; sorted ascending array = sparse
 }
 
 export const DEFAULT_SORTER_CONFIG: SorterConfig = {
@@ -22,6 +24,8 @@ export const DEFAULT_SORTER_CONFIG: SorterConfig = {
   targetSortRate: 150,
   dropSpacing: 32,
   speedMultiplier: 1,
+  advancedSortMode: false,
+  selectedWells: null,
 };
 
 // ── Cell events and population ───────────────────────────────────────────────
@@ -94,6 +98,12 @@ export const PLATE_GEOMETRY: Record<PlateType, PlateGeometry> = {
     pitchX: 0.0225, pitchZ: 0.0225,
     wellRadius: 0.008, wellDepth: 0.018,
     plateWidth: 0.639, plateDepth: 0.427, plateHeight: 0.014,
+  },
+  '1536': {
+    rows: 32, cols: 48, totalWells: 1536,
+    pitchX: 0.01125, pitchZ: 0.01125,
+    wellRadius: 0.00425, wellDepth: 0.016,
+    plateWidth: 0.639, plateDepth: 0.427, plateHeight: 0.012,
   },
 };
 

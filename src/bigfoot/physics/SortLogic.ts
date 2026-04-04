@@ -16,6 +16,7 @@ import {
   getStageTarget,
   getStageTargetFourWay,
   nextWellIndex,
+  nextWellIndexFiltered,
   nextGroupStart,
 } from './PlateKinematics';
 
@@ -184,7 +185,9 @@ export function stepSort(
           phaseTimer = 0;
         }
       } else {
-        const nextWell = nextWellIndex(state.currentWellIndex, geo.totalWells);
+        const nextWell = (config.advancedSortMode && config.selectedWells)
+          ? nextWellIndexFiltered(state.currentWellIndex, config.selectedWells)
+          : nextWellIndex(state.currentWellIndex, geo.totalWells);
         if (nextWell === -1) {
           next.phase = 'PLATE_COMPLETE';
         } else {
@@ -213,15 +216,19 @@ export function stepSort(
  * Begin a new sort: position stage at the first well (or group) and transition to MOVING_TO_WELL.
  */
 export function beginSort(state: SortRunState, config: SorterConfig): SortRunState {
+  const firstWell = (config.advancedSortMode && config.selectedWells?.length)
+    ? config.selectedWells[0]
+    : 0;
+
   const target = config.sortMode === 'FOUR_WAY'
-    ? getStageTargetFourWay(0, config.plateType)
-    : getStageTarget(0, config.plateType);
+    ? getStageTargetFourWay(firstWell, config.plateType)
+    : getStageTarget(firstWell, config.plateType);
 
   resetSortAccumulators();
   return {
     ...state,
     phase: 'MOVING_TO_WELL' as SortPhase,
-    currentWellIndex: 0,
+    currentWellIndex: firstWell,
     targetStageX: target.x,
     targetStageZ: target.z,
     sortStartTime: performance.now(),

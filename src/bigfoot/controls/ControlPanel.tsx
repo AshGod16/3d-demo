@@ -2,6 +2,7 @@ import { useSorterStore } from '../store/sorterStore';
 import type { PlateType, SortMode } from '../physics/types';
 import { PLATE_GEOMETRY } from '../physics/types';
 import { estimatedSortTime } from '../physics/PlateKinematics';
+import { WellPicker } from './WellPicker';
 
 function ToggleButton({
   label,
@@ -65,8 +66,13 @@ export function BigfootControlPanel() {
 
   const isRunning = phase !== 'IDLE' && phase !== 'PLATE_COMPLETE';
   const isDone = phase === 'PLATE_COMPLETE';
+  const is1536 = config.plateType === '1536';
 
-  const estTime = estimatedSortTime(config);
+  const estTimeFull = estimatedSortTime(config);
+  const estTimeSelected = (config.advancedSortMode && config.selectedWells)
+    ? estTimeFull * (config.selectedWells.length / PLATE_GEOMETRY[config.plateType].totalWells)
+    : null;
+
   const fmt = (s: number) => s < 60 ? `~${s.toFixed(0)}s` : `~${(s / 60).toFixed(1)}min`;
 
   return (
@@ -79,7 +85,7 @@ export function BigfootControlPanel() {
       <div style={{ marginBottom: 10 }}>
         <div style={{ fontSize: 10, color: '#445566', marginBottom: 4 }}>Plate Format</div>
         <div style={{ display: 'flex', gap: 6 }}>
-          {(['96', '384'] as PlateType[]).map((pt) => (
+          {(['96', '384', '1536'] as PlateType[]).map((pt) => (
             <ToggleButton
               key={pt}
               label={`${pt}-well`}
@@ -88,25 +94,72 @@ export function BigfootControlPanel() {
             />
           ))}
         </div>
+        {is1536 && (
+          <div style={{ fontSize: 9, color: '#334455', marginTop: 3 }}>
+            1536-well · straight-down only · ~3m14s full plate
+          </div>
+        )}
       </div>
 
-      {/* Sort mode */}
-      <div style={{ marginBottom: 10 }}>
-        <div style={{ fontSize: 10, color: '#445566', marginBottom: 4 }}>Sort Mode</div>
-        <div style={{ display: 'flex', gap: 6 }}>
-          {([['STRAIGHT_DOWN', 'Straight-Down'], ['FOUR_WAY', '4-Way']] as [SortMode, string][]).map(([mode, label]) => (
-            <ToggleButton
-              key={mode}
-              label={label}
-              active={config.sortMode === mode}
-              onClick={() => setConfig({ sortMode: mode })}
-              color={mode === 'FOUR_WAY' ? '#00e5aa' : '#00ccff'}
-            />
-          ))}
+      {/* Sort mode (hidden for 1536) */}
+      {!is1536 && (
+        <div style={{ marginBottom: 10 }}>
+          <div style={{ fontSize: 10, color: '#445566', marginBottom: 4 }}>Sort Mode</div>
+          <div style={{ display: 'flex', gap: 6 }}>
+            {([['STRAIGHT_DOWN', 'Straight-Down'], ['FOUR_WAY', '4-Way']] as [SortMode, string][]).map(([mode, label]) => (
+              <ToggleButton
+                key={mode}
+                label={label}
+                active={config.sortMode === mode}
+                onClick={() => setConfig({ sortMode: mode })}
+                color={mode === 'FOUR_WAY' ? '#00e5aa' : '#00ccff'}
+              />
+            ))}
+          </div>
+          {config.sortMode === 'FOUR_WAY' && (
+            <div style={{ fontSize: 9, color: '#2a5a4a', marginTop: 3 }}>
+              4 streams · {config.plateType === '96' ? '24' : '96'} positions · ~2.6× faster
+            </div>
+          )}
         </div>
-        {config.sortMode === 'FOUR_WAY' && (
-          <div style={{ fontSize: 9, color: '#2a5a4a', marginTop: 3 }}>
-            4 streams · {config.plateType === '96' ? '24' : '96'} positions · ~2.6× faster
+      )}
+
+      {/* Advanced Sort Mode toggle */}
+      <div style={{ marginBottom: 10 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{ fontSize: 10, color: '#445566' }}>Advanced Sort Mode</div>
+          <button
+            onClick={() => setConfig({ advancedSortMode: !config.advancedSortMode })}
+            disabled={isRunning}
+            style={{
+              marginLeft: 'auto',
+              padding: '3px 10px',
+              borderRadius: 3,
+              border: `1px solid ${config.advancedSortMode ? '#ff9933' : '#1e2a3a'}`,
+              background: config.advancedSortMode ? '#ff993318' : 'transparent',
+              color: config.advancedSortMode ? '#ff9933' : '#445566',
+              cursor: isRunning ? 'not-allowed' : 'pointer',
+              fontSize: 10,
+              fontWeight: config.advancedSortMode ? 'bold' : 'normal',
+            }}
+          >
+            {config.advancedSortMode ? 'ON' : 'OFF'}
+          </button>
+        </div>
+        {config.advancedSortMode && !isRunning && (
+          <WellPicker plateType={config.plateType} />
+        )}
+        {config.advancedSortMode && config.selectedWells && (
+          <div style={{ fontSize: 9, color: '#445566', marginTop: 4 }}>
+            {config.selectedWells.length} wells selected
+            {estTimeSelected !== null && (
+              <> · Est. {fmt(estTimeSelected)} <span style={{ color: '#334455' }}>(vs {fmt(estTimeFull)} full plate)</span></>
+            )}
+          </div>
+        )}
+        {config.advancedSortMode && !config.selectedWells && (
+          <div style={{ fontSize: 9, color: '#664422', marginTop: 4 }}>
+            Select wells above to enable sort
           </div>
         )}
       </div>
@@ -145,8 +198,16 @@ export function BigfootControlPanel() {
           ))}
         </div>
         <div style={{ fontSize: 9, color: '#334455', marginTop: 4 }}>
-          Est. sort time: <span style={{ color: '#667788' }}>{fmt(estTime)}</span>
-          {' '}· Paper benchmark: ~20s
+          Est. sort time:{' '}
+          <span style={{ color: '#667788' }}>
+            {config.advancedSortMode && estTimeSelected !== null
+              ? fmt(estTimeSelected)
+              : fmt(estTimeFull)}
+          </span>
+          {!is1536 && !config.advancedSortMode && (
+            <> · Paper benchmark: {config.sortMode === 'FOUR_WAY' ? '~8s' : '~20s'}</>
+          )}
+          {is1536 && <> · Paper benchmark: ~3m14s</>}
         </div>
       </div>
 
@@ -154,15 +215,21 @@ export function BigfootControlPanel() {
       <div style={{ display: 'flex', gap: 8 }}>
         <button
           onClick={isDone ? resetSort : startSort}
-          disabled={isRunning}
+          disabled={isRunning || (config.advancedSortMode && !config.selectedWells)}
           style={{
             flex: 2,
             padding: '9px 0',
             borderRadius: 5,
             border: 'none',
-            background: isRunning ? '#334' : isDone ? '#44aa55' : '#0055cc',
-            color: isRunning ? '#556' : '#fff',
-            cursor: isRunning ? 'not-allowed' : 'pointer',
+            background: isRunning
+              ? '#334'
+              : isDone
+                ? '#44aa55'
+                : (config.advancedSortMode && !config.selectedWells)
+                  ? '#223'
+                  : '#0055cc',
+            color: (isRunning || (config.advancedSortMode && !config.selectedWells)) ? '#556' : '#fff',
+            cursor: (isRunning || (config.advancedSortMode && !config.selectedWells)) ? 'not-allowed' : 'pointer',
             fontSize: 12,
             fontWeight: 'bold',
             letterSpacing: '0.04em',

@@ -1,6 +1,7 @@
 // Well plate procedural geometry using InstancedMesh.
-// Handles 96-well and 384-well plates with per-instance color updates for fill state.
+// Handles 96-well, 384-well, and 1536-well plates with per-instance color updates.
 // Color interpolates clear → blue (simulating TMB colorimetric reaction).
+// In advanced sort mode, unselected wells are dimmed to dark gray.
 
 import { useRef, useEffect, useMemo } from 'react';
 import * as THREE from 'three';
@@ -11,8 +12,9 @@ import type { PlateType } from '../../physics/types';
 import { wellLocalPosition } from '../../physics/PlateKinematics';
 
 // TMB reaction colors (match real experiment from white paper)
-const COLOR_EMPTY = new THREE.Color(0.08, 0.10, 0.14);  // dark, clear TMB
-const COLOR_FILL  = new THREE.Color(0.00, 0.25, 0.88);  // vivid blue, reacted TMB
+const COLOR_EMPTY    = new THREE.Color(0.08, 0.10, 0.14);  // dark, clear TMB
+const COLOR_FILL     = new THREE.Color(0.00, 0.25, 0.88);  // vivid blue, reacted TMB
+const COLOR_INACTIVE = new THREE.Color(0.05, 0.05, 0.06);  // dimmed — not in selection
 
 interface WellPlateProps {
   plateType: PlateType;
@@ -26,11 +28,13 @@ export function WellPlate({ plateType }: WellPlateProps) {
 
   const wellGeometry = useMemo(() => {
     // Conical well (PCR plate style): wider at top, narrower at bottom
+    // Fewer segments for denser plates to keep geometry count reasonable
+    const segments = plateType === '96' ? 16 : plateType === '384' ? 10 : 6;
     return new THREE.CylinderGeometry(
-      geo.wellRadius,           // top radius
-      geo.wellRadius * 0.55,   // bottom radius (conical)
+      geo.wellRadius,
+      geo.wellRadius * 0.55,
       geo.wellDepth,
-      plateType === '96' ? 16 : 10,
+      segments,
       1,
       false
     );
@@ -62,11 +66,19 @@ export function WellPlate({ plateType }: WellPlateProps) {
   useFrame(() => {
     if (!meshRef.current || !meshRef.current.instanceColor) return;
 
-    const { wellFills } = useSorterStore.getState().runState;
+    const { runState, config } = useSorterStore.getState();
+    const { wellFills } = runState;
+    const selectedSet = (config.advancedSortMode && config.selectedWells)
+      ? new Set(config.selectedWells)
+      : null;
 
     for (let i = 0; i < geo.totalWells; i++) {
-      colorRef.copy(COLOR_EMPTY).lerp(COLOR_FILL, wellFills[i] ?? 0);
-      meshRef.current.setColorAt(i, colorRef);
+      if (selectedSet && !selectedSet.has(i)) {
+        meshRef.current.setColorAt(i, COLOR_INACTIVE);
+      } else {
+        colorRef.copy(COLOR_EMPTY).lerp(COLOR_FILL, wellFills[i] ?? 0);
+        meshRef.current.setColorAt(i, colorRef);
+      }
     }
 
     meshRef.current.instanceColor.needsUpdate = true;

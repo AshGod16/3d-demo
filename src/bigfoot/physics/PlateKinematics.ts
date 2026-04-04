@@ -8,8 +8,9 @@ import { PLATE_GEOMETRY } from './types';
 
 // Paper benchmark sort times (1 event/well, real-time 1×).
 const BENCHMARK_SECONDS: Record<string, Record<string, number>> = {
-  '96':  { STRAIGHT_DOWN: 19.87, FOUR_WAY:  7.65 },
-  '384': { STRAIGHT_DOWN: 61.13, FOUR_WAY: 17.38 },
+  '96':   { STRAIGHT_DOWN: 19.87, FOUR_WAY:   7.65 },
+  '384':  { STRAIGHT_DOWN: 61.13, FOUR_WAY:  17.38 },
+  '1536': { STRAIGHT_DOWN: 194.43, FOUR_WAY: 194.43 }, // paper: straight-down only
 };
 
 /**
@@ -98,6 +99,18 @@ export function stepStagePosition(
  */
 export function nextWellIndex(current: number, total: number): number {
   return current + 1 < total ? current + 1 : -1;
+}
+
+/**
+ * Advanced sort mode: advance to the next well in the user-selected set.
+ * `selected` must be sorted ascending. Returns -1 when all selected wells are done.
+ */
+export function nextWellIndexFiltered(
+  current: number,
+  selected: number[],
+): number {
+  const idx = selected.indexOf(current);
+  return idx !== -1 && idx + 1 < selected.length ? selected[idx + 1] : -1;
 }
 
 /**

@@ -113,9 +113,8 @@ export function DropletStream({ nozzleY, plateY, numDroplets = 50 }: DropletStre
       } else if (p.type === 'WASTE') {
         colorRef.current.set('#ff4422');
       } else {
-        // Sheath: slight variation for visual texture
-        const b = 0.25 + p.progress * 0.1;
-        colorRef.current.setRGB(0.05, 0.18 + b * 0.1, 0.30 + b);
+        // Sheath: translucent mid-blue — visible as fluid, not a dark blob
+        colorRef.current.setRGB(0.25, 0.55, 1.0);
       }
       meshRef.current.setColorAt(i, colorRef.current);
     }
@@ -128,7 +127,14 @@ export function DropletStream({ nozzleY, plateY, numDroplets = 50 }: DropletStre
 
   return (
     <instancedMesh ref={meshRef} args={[geometry, undefined, numDroplets]}>
-      <meshStandardMaterial vertexColors metalness={0.1} roughness={0.3} />
+      <meshStandardMaterial
+        vertexColors
+        transparent
+        opacity={0.55}
+        depthWrite={false}
+        metalness={0}
+        roughness={0.1}
+      />
     </instancedMesh>
   );
 }

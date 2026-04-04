@@ -48,11 +48,11 @@ function SimulationLoop() {
       }
     }
 
-    // Throttle store update to ~20Hz for React telemetry components
+    // Throttle full store update to ~20Hz for React telemetry components.
+    // recentEvents is always flushed so the scatter plot stays populated every frame.
     if (frameCount.current % 3 === 0) {
       store.updateRunState(nextState);
     } else {
-      // Always update stage position and well fills immediately (for smooth animation)
       useSorterStore.setState((s) => ({
         runState: {
           ...s.runState,
@@ -62,6 +62,7 @@ function SimulationLoop() {
           wellCounts: nextState.wellCounts,
           totalCellsSorted: nextState.totalCellsSorted,
           totalEventsProcessed: nextState.totalEventsProcessed,
+          recentEvents: nextState.recentEvents,
         },
       }));
     }
@@ -85,7 +86,8 @@ export function BigfootScene() {
         position={[0.5, 1.5, 1]}
         intensity={1.0}
         castShadow
-        shadow-mapSize={[1024, 1024]}
+        shadow-mapSize={[2048, 2048]}
+        shadow-normalBias={0.02}
       />
       <directionalLight position={[-0.5, 0.5, -0.5]} intensity={0.25} color="#8899bb" />
 

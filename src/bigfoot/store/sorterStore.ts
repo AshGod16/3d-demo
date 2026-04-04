@@ -25,6 +25,7 @@ interface SorterStore {
   resetSort: () => void;
   pauseSort: () => void;
   setConfig: (patch: Partial<SorterConfig>) => void;
+  setSelectedWells: (wells: number[] | null) => void;
 
   // Called by simulation loop (not React)
   updateRunState: (s: SortRunState) => void;
@@ -56,7 +57,23 @@ export const useSorterStore = create<SorterStore>()((set, get) => ({
 
   setConfig: (patch) => {
     set((s) => {
-      const config = { ...s.config, ...patch };
+      let config = { ...s.config, ...patch };
+      // 1536-well: force straight-down and disable advanced mode
+      if (patch.plateType === '1536') {
+        config = { ...config, sortMode: 'STRAIGHT_DOWN', advancedSortMode: false, selectedWells: null };
+      }
+      // Switching away from advanced mode: clear selection
+      if (patch.advancedSortMode === false) {
+        config = { ...config, selectedWells: null };
+      }
+      return { config, runState: initialRunState(config) };
+    });
+  },
+
+  setSelectedWells: (wells) => {
+    set((s) => {
+      const sorted = wells ? [...wells].sort((a, b) => a - b) : null;
+      const config = { ...s.config, selectedWells: sorted };
       return { config, runState: initialRunState(config) };
     });
   },

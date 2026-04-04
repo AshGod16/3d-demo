@@ -62,7 +62,15 @@ export function SortCounters() {
     : '—';
 
   const estTotal = estimatedSortTime(config);
-  const wellsDone = phase === 'PLATE_COMPLETE' ? geo.totalWells : currentWellIndex;
+  const totalTarget = (config.advancedSortMode && config.selectedWells)
+    ? config.selectedWells.length
+    : geo.totalWells;
+  // In advanced mode, count how many selected wells have been completed
+  const wellsDone = phase === 'PLATE_COMPLETE'
+    ? totalTarget
+    : (config.advancedSortMode && config.selectedWells)
+      ? config.selectedWells.filter(w => w < currentWellIndex).length
+      : currentWellIndex;
   const estRemaining = phase === 'PLATE_COMPLETE'
     ? 0
     : Math.max(0, estTotal - elapsed);
@@ -93,7 +101,7 @@ export function SortCounters() {
           {phasePretty[phase] ?? phase}
         </span>
         <span style={{ fontSize: 10, color: '#334455', marginLeft: 'auto' }}>
-          Well {wellsDone + (phase === 'PLATE_COMPLETE' ? 0 : 1)} / {geo.totalWells}
+          Well {wellsDone + (phase === 'PLATE_COMPLETE' ? 0 : 1)} / {totalTarget}
         </span>
       </div>
 
@@ -108,12 +116,12 @@ export function SortCounters() {
       {/* Progress bar */}
       <div style={{ marginTop: 4 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 9, color: '#445566', marginBottom: 2 }}>
-          <span>PLATE PROGRESS</span>
-          <span>{Math.round((wellsDone / geo.totalWells) * 100)}%</span>
+          <span>{config.advancedSortMode ? 'SORT PROGRESS' : 'PLATE PROGRESS'}</span>
+          <span>{Math.round((wellsDone / totalTarget) * 100)}%</span>
         </div>
         <div style={{ background: '#1a2030', borderRadius: 3, height: 5, overflow: 'hidden' }}>
           <div style={{
-            width: `${(wellsDone / geo.totalWells) * 100}%`,
+            width: `${(wellsDone / totalTarget) * 100}%`,
             height: '100%',
             background: phase === 'PLATE_COMPLETE' ? '#00e5aa' : '#0066ff',
             borderRadius: 3,
@@ -130,8 +138,9 @@ export function SortCounters() {
       {/* Benchmark comparison */}
       {phase === 'PLATE_COMPLETE' && (() => {
         const benchmarks: Record<string, Record<string, number>> = {
-          '96':  { STRAIGHT_DOWN: 19.87, FOUR_WAY: 7.65  },
-          '384': { STRAIGHT_DOWN: 61.13, FOUR_WAY: 17.38 },
+          '96':   { STRAIGHT_DOWN: 19.87, FOUR_WAY: 7.65   },
+          '384':  { STRAIGHT_DOWN: 61.13, FOUR_WAY: 17.38  },
+          '1536': { STRAIGHT_DOWN: 194.43, FOUR_WAY: 194.43 },
         };
         const bench      = benchmarks[config.plateType];
         const modeLabel  = config.sortMode === 'FOUR_WAY' ? '4-way' : 'straight-down';
@@ -140,6 +149,8 @@ export function SortCounters() {
         const thisBench  = bench?.[config.sortMode] ?? 20;
         const altBench   = bench?.[altMode] ?? 20;
         const faster     = config.sortMode === 'FOUR_WAY';
+        const is1536     = config.plateType === '1536';
+        const isAdvanced = config.advancedSortMode && config.selectedWells;
         return (
           <div style={{
             marginTop: 8,
@@ -152,13 +163,20 @@ export function SortCounters() {
           }}>
             ✓ Sort complete in {fmt(elapsed)}
             <div style={{ marginTop: 3, color: '#445566', fontSize: 9 }}>
-              {modeLabel} benchmark: ~{thisBench.toFixed(1)}s
-              <span style={{ marginLeft: 6 }}>·</span>
-              <span style={{ marginLeft: 6 }}>{altLabel}: ~{altBench.toFixed(1)}s</span>
-              {faster && (
-                <span style={{ marginLeft: 6, color: '#00e5aa' }}>
-                  ({(altBench / thisBench).toFixed(1)}× faster)
-                </span>
+              {isAdvanced
+                ? `${config.selectedWells!.length} wells sorted (advanced mode)`
+                : `${modeLabel} benchmark: ~${thisBench.toFixed(1)}s`
+              }
+              {!is1536 && !isAdvanced && (
+                <>
+                  <span style={{ marginLeft: 6 }}>·</span>
+                  <span style={{ marginLeft: 6 }}>{altLabel}: ~{altBench.toFixed(1)}s</span>
+                  {faster && (
+                    <span style={{ marginLeft: 6, color: '#00e5aa' }}>
+                      ({(altBench / thisBench).toFixed(1)}× faster)
+                    </span>
+                  )}
+                </>
               )}
             </div>
           </div>
