@@ -27,7 +27,7 @@ Sorting White Paper (Thermo Fisher / Invitrogen, 2022–2024).
 
 ---
 
-## Phase 2 — 1536-Well Plate + Advanced Sort Mode
+## Phase 2 — 1536-Well Plate + Advanced Sort Mode (Complete)
 
 **Why:** The 1536-well plate and selective well targeting are two of the Bigfoot's biggest
 product differentiators. The paper demonstrates full-plate sorting (~3:14/plate) and an
