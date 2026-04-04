@@ -8,7 +8,7 @@ import { useSorterStore } from '../store/sorterStore';
 import { DEFAULT_GATE } from '../physics/types';
 
 const W = 270;
-const H = 200;
+const H = 168;
 
 export function ScatterPlot() {
   const canvasRef = useRef<HTMLCanvasElement>(null);

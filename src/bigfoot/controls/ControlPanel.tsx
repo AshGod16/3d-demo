@@ -58,14 +58,11 @@ function SpeedButton({ mult, active, onClick }: { mult: number; active: boolean;
 }
 
 export function BigfootControlPanel() {
-  const config = useSorterStore((s) => s.config);
+    const config = useSorterStore((s) => s.config);
   const phase = useSorterStore((s) => s.runState.phase);
   const setConfig = useSorterStore((s) => s.setConfig);
-  const startSort = useSorterStore((s) => s.startSort);
-  const resetSort = useSorterStore((s) => s.resetSort);
 
   const isRunning = phase !== 'IDLE' && phase !== 'PLATE_COMPLETE';
-  const isDone = phase === 'PLATE_COMPLETE';
   const is1536 = config.plateType === '1536';
 
   const estTimeFull = estimatedSortTime(config);
@@ -211,48 +208,6 @@ export function BigfootControlPanel() {
         </div>
       </div>
 
-      {/* Action buttons */}
-      <div style={{ display: 'flex', gap: 8 }}>
-        <button
-          onClick={isDone ? resetSort : startSort}
-          disabled={isRunning || (config.advancedSortMode && !config.selectedWells)}
-          style={{
-            flex: 2,
-            padding: '9px 0',
-            borderRadius: 5,
-            border: 'none',
-            background: isRunning
-              ? '#334'
-              : isDone
-                ? '#44aa55'
-                : (config.advancedSortMode && !config.selectedWells)
-                  ? '#223'
-                  : '#0055cc',
-            color: (isRunning || (config.advancedSortMode && !config.selectedWells)) ? '#556' : '#fff',
-            cursor: (isRunning || (config.advancedSortMode && !config.selectedWells)) ? 'not-allowed' : 'pointer',
-            fontSize: 12,
-            fontWeight: 'bold',
-            letterSpacing: '0.04em',
-          }}
-        >
-          {isRunning ? '⏳ SORTING...' : isDone ? '↺ NEW SORT' : '▶ START SORT'}
-        </button>
-        <button
-          onClick={resetSort}
-          style={{
-            flex: 1,
-            padding: '9px 0',
-            borderRadius: 5,
-            border: '1px solid #1e2a3a',
-            background: 'transparent',
-            color: '#445566',
-            cursor: 'pointer',
-            fontSize: 11,
-          }}
-        >
-          Reset
-        </button>
-      </div>
     </div>
   );
 }

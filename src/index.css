@@ -58,9 +58,15 @@ html, body, #root {
 .sidebar-pane {
   display: flex;
   flex-direction: column;
-  overflow-y: auto;
+  overflow: hidden;
   border-left: 1px solid #1a2030;
   background: #0d1120;
+}
+
+.sidebar-scroll {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
   scrollbar-width: thin;
   scrollbar-color: #1e2a3a transparent;
 }

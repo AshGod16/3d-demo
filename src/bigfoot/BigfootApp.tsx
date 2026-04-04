@@ -1,10 +1,11 @@
 import { BigfootScene } from './scene/BigfootScene';
 import { BigfootTelemetryPanel } from './telemetry/TelemetryPanel';
 import { BigfootControlPanel } from './controls/ControlPanel';
+import { SortActionBar } from './controls/SortActionBar';
 
 export function BigfootApp() {
   return (
-    <div className="app-layout">
+    <div className="app-layout" style={{ height: '100%' }}>
       {/* Header */}
       <div className="app-header">
         <span className="app-title" style={{ color: '#00ccff' }}>Bigfoot Spectral Cell Sorter</span>
@@ -20,10 +21,13 @@ export function BigfootApp() {
           <BigfootScene />
         </div>
 
-        {/* Sidebar */}
+        {/* Sidebar: scrollable body + pinned action bar */}
         <div className="sidebar-pane">
-          <BigfootTelemetryPanel />
-          <BigfootControlPanel />
+          <div className="sidebar-scroll">
+            <BigfootTelemetryPanel />
+            <BigfootControlPanel />
+          </div>
+          <SortActionBar />
         </div>
       </div>
     </div>
