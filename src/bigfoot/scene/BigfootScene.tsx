@@ -1,9 +1,11 @@
 // R3F Canvas + simulation heartbeat for the Bigfoot Spectral Cell Sorter.
 // useFrame is the ONLY place the sort simulation is stepped.
 
-import { useRef } from 'react';
-import { Canvas, useFrame } from '@react-three/fiber';
+import { useRef, useEffect } from 'react';
+import * as THREE from 'three';
+import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { OrbitControls, Environment, Grid } from '@react-three/drei';
+import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib';
 import { useSorterStore } from '../store/sorterStore';
 import { SortChamber } from './machine/SortChamber';
 import { SortStreams } from './machine/SortStreams';
@@ -71,7 +73,62 @@ function SimulationLoop() {
   return null;
 }
 
+const PAN_SPEED = 0.4; // world units per second
+
+function KeyboardPan({ controlsRef }: { controlsRef: React.RefObject<OrbitControlsImpl | null> }) {
+  const { camera } = useThree();
+  const keys = useRef<Set<string>>(new Set());
+
+  useEffect(() => {
+    const onDown = (e: KeyboardEvent) => {
+      if (['w','a','s','d','q','e','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key)) {
+        e.preventDefault();
+        keys.current.add(e.key);
+      }
+    };
+    const onUp = (e: KeyboardEvent) => keys.current.delete(e.key);
+    window.addEventListener('keydown', onDown);
+    window.addEventListener('keyup', onUp);
+    return () => { window.removeEventListener('keydown', onDown); window.removeEventListener('keyup', onUp); };
+  }, []);
+
+  useFrame((_, delta) => {
+    const controls = controlsRef.current;
+    if (!controls || keys.current.size === 0) return;
+
+    const speed = PAN_SPEED * delta;
+
+    // Camera right vector (world space, projected to XZ)
+    const right = new THREE.Vector3();
+    right.setFromMatrixColumn(camera.matrixWorld, 0);
+    right.y = 0;
+    right.normalize();
+
+    // Camera forward vector (projected to XZ)
+    const forward = new THREE.Vector3();
+    forward.setFromMatrixColumn(camera.matrixWorld, 2);
+    forward.y = 0;
+    forward.normalize().negate();
+
+    const delta3 = new THREE.Vector3();
+    const k = keys.current;
+    if (k.has('w') || k.has('ArrowUp'))    delta3.addScaledVector(forward, speed);
+    if (k.has('s') || k.has('ArrowDown'))  delta3.addScaledVector(forward, -speed);
+    if (k.has('a') || k.has('ArrowLeft'))  delta3.addScaledVector(right, -speed);
+    if (k.has('d') || k.has('ArrowRight')) delta3.addScaledVector(right, speed);
+    if (k.has('q')) delta3.y -= speed;
+    if (k.has('e')) delta3.y += speed;
+
+    camera.position.add(delta3);
+    controls.target.add(delta3);
+    controls.update();
+  });
+
+  return null;
+}
+
 export function BigfootScene() {
+  const controlsRef = useRef<OrbitControlsImpl | null>(null);
   return (
     <Canvas
       camera={{ position: [0.55, 0.45, 0.75], fov: 45, near: 0.001, far: 10 }}
@@ -123,7 +180,9 @@ export function BigfootScene() {
 
       {/* Camera orbit controls */}
       <OrbitControls
-        enablePan={false}
+        ref={controlsRef}
+        enablePan
+        panSpeed={0.8}
         minDistance={0.3}
         maxDistance={2.0}
         target={[0, 0.1, 0]}
@@ -131,6 +190,9 @@ export function BigfootScene() {
         dampingFactor={0.07}
         maxPolarAngle={Math.PI * 0.75}
       />
+
+      {/* Keyboard pan (WASD / arrow keys) */}
+      <KeyboardPan controlsRef={controlsRef} />
     </Canvas>
   );
 }
