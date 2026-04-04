@@ -1,0 +1,146 @@
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body, #root {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #0a0a14;
+  color: #ccd;
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+/* App layout */
+.app-layout {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.app-header {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  padding: 8px 16px;
+  background: #0d1120;
+  border-bottom: 1px solid #1e2a3a;
+  flex-shrink: 0;
+}
+
+.app-title {
+  font-size: 14px;
+  font-weight: bold;
+  color: #00e5aa;
+  letter-spacing: 0.03em;
+}
+
+.app-subtitle {
+  font-size: 11px;
+  color: #445566;
+}
+
+.app-content {
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  flex: 1;
+  overflow: hidden;
+}
+
+.canvas-pane {
+  position: relative;
+  overflow: hidden;
+}
+
+.sidebar-pane {
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  border-left: 1px solid #1a2030;
+  background: #0d1120;
+  scrollbar-width: thin;
+  scrollbar-color: #1e2a3a transparent;
+}
+
+/* Telemetry */
+.telemetry-panel {
+  border-bottom: 1px solid #1a2030;
+}
+
+.chart-container {
+  padding: 8px 12px 4px;
+}
+
+.chart-title {
+  font-size: 10px;
+  color: #556677;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 4px;
+}
+
+.rpm-gauge {
+  display: flex;
+  justify-content: center;
+}
+
+.temp-panel {
+  border-top: 1px solid #1a2030;
+  padding-top: 8px;
+}
+
+/* Control panels */
+.control-panel {
+  padding: 12px;
+  border-bottom: 1px solid #1a2030;
+}
+
+.experiment-panel {
+  padding: 12px;
+  flex: 1;
+}
+
+/* Shared button style */
+.action-btn {
+  flex: 1;
+  padding: 7px 10px;
+  border-radius: 4px;
+  border: 1px solid #00e5aa55;
+  background: #00e5aa18;
+  color: #00e5aa;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: bold;
+  transition: background 0.15s;
+}
+
+.action-btn:hover {
+  background: #00e5aa30;
+}
+
+.action-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* Failure alert pulse animation */
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.65; }
+}
+
+/* Stats panel (drei) — reposition to not overlap controls */
+.stats-panel {
+  position: absolute !important;
+  top: 8px !important;
+  left: 8px !important;
+}
+
+/* Range input styling */
+input[type="range"] {
+  height: 4px;
+  border-radius: 2px;
+}
