@@ -132,6 +132,9 @@ export interface SortRunState {
   abortCount: number;
   eventsPerSec: number;
   recentEvents: CellEvent[];   // rolling window for scatter plot
+  // InfiniSort cumulative tracking (across sequential plates)
+  infinisortPlateCount: number; // plates completed before this one (0 = first plate)
+  infinisortTotalCells: number; // cells sorted across all previous plates
 }
 
 export function initialRunState(config: SorterConfig): SortRunState {
@@ -152,6 +155,8 @@ export function initialRunState(config: SorterConfig): SortRunState {
     abortCount: 0,
     eventsPerSec: 0,
     recentEvents: [],
+    infinisortPlateCount: 0,
+    infinisortTotalCells: 0,
   };
 }
 

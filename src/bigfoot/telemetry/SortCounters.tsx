@@ -39,6 +39,8 @@ export function SortCounters() {
     totalEventsProcessed,
     eventsPerSec,
     currentWellIndex,
+    infinisortPlateCount,
+    infinisortTotalCells,
   } = runState;
 
   const phasePretty: Record<string, string> = {
@@ -151,6 +153,8 @@ export function SortCounters() {
         const faster     = config.sortMode === 'FOUR_WAY';
         const is1536     = config.plateType === '1536';
         const isAdvanced = config.advancedSortMode && config.selectedWells;
+        const totalPlates = infinisortPlateCount + 1;
+        const cumulativeCells = infinisortTotalCells + totalCellsSorted;
         return (
           <div style={{
             marginTop: 8,
@@ -179,6 +183,12 @@ export function SortCounters() {
                 </>
               )}
             </div>
+            {/* InfiniSort cumulative line */}
+            {infinisortPlateCount > 0 && (
+              <div style={{ marginTop: 5, paddingTop: 5, borderTop: `1px solid ${faster ? '#00e5aa22' : '#0055ff22'}`, color: '#445566', fontSize: 9 }}>
+                InfiniSort: plate {totalPlates} · {cumulativeCells.toLocaleString()} cells total
+              </div>
+            )}
           </div>
         );
       })()}

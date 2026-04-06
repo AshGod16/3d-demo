@@ -24,6 +24,7 @@ interface SorterStore {
   startSort: () => void;
   resetSort: () => void;
   pauseSort: () => void;
+  swapPlate: () => void;
   setConfig: (patch: Partial<SorterConfig>) => void;
   setSelectedWells: (wells: number[] | null) => void;
 
@@ -53,6 +54,22 @@ export const useSorterStore = create<SorterStore>()((set, get) => ({
     if (runState.phase === 'IDLE') return;
     // Toggle: pause by setting IDLE, resume not supported in Phase 1
     set({ runState: { ...runState, phase: 'IDLE' } });
+  },
+
+  swapPlate: () => {
+    const { config, runState } = get();
+    // Accumulate this plate's results into the InfiniSort counters
+    const nextPlateCount = runState.infinisortPlateCount + 1;
+    const nextTotalCells = runState.infinisortTotalCells + runState.totalCellsSorted;
+    const freshState = initialRunState(config);
+    const startedState = beginSort(freshState, config);
+    set({
+      runState: {
+        ...startedState,
+        infinisortPlateCount: nextPlateCount,
+        infinisortTotalCells: nextTotalCells,
+      },
+    });
   },
 
   setConfig: (patch) => {

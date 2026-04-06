@@ -59,7 +59,7 @@ This phase shows trainees the flexibility of the instrument.
 
 ---
 
-## Phase 3 — InfiniSort + Post-Sort HRP/TMB Verification View
+## Phase 3 — InfiniSort + Post-Sort HRP/TMB Verification View (Complete)
 
 **Why:** The paper emphasizes InfiniSort (sequential plate reuse without realignment) as a
 throughput feature. The HRP/TMB colorimetric assay is the real-world verification method —
