@@ -28,28 +28,38 @@ export function generateCellEvent(gate: SortGate = DEFAULT_GATE): CellEvent {
   const r = Math.random();
   let population: CellPopulation;
   let fscA: number, sscA: number, fscH: number, uv349: number;
+  let ch488_530: number, ch561_590: number, ch638_660: number;
 
   if (r < 0.70) {
     // Live single CHO cells — main population cluster
     population = 'LIVE_SINGLE';
-    fscA  = clamp(gaussian(620, 90),  50, 1000);
-    sscA  = clamp(gaussian(280, 70),  20, 700);
-    fscH  = clamp(fscA * clamp(gaussian(0.93, 0.025), 0.7, 1.1), 50, 1000);
-    uv349 = clamp(gaussian(650, 100), 50, 1000);
+    fscA      = clamp(gaussian(620, 90),  50, 1000);
+    sscA      = clamp(gaussian(280, 70),  20, 700);
+    fscH      = clamp(fscA * clamp(gaussian(0.93, 0.025), 0.7, 1.1), 50, 1000);
+    uv349     = clamp(gaussian(650, 100), 50, 1000);
+    ch488_530 = clamp(gaussian(700, 100), 50, 1000); // FITC bright (target cell marker)
+    ch561_590 = clamp(gaussian(250,  70), 10, 600);  // PE dim baseline
+    ch638_660 = clamp(gaussian(120,  50), 10, 400);  // APC dim baseline
   } else if (r < 0.90) {
-    // Cellular debris — low FSC, low SSC
+    // Cellular debris — low FSC, low SSC, dim all channels
     population = 'DEBRIS';
-    fscA  = clamp(gaussian(160, 110), 10, 500);
-    sscA  = clamp(gaussian(90,  70),  10, 400);
-    fscH  = clamp(fscA * clamp(gaussian(0.90, 0.06), 0.6, 1.1), 10, 500);
-    uv349 = clamp(gaussian(120, 100),  5, 400);
+    fscA      = clamp(gaussian(160, 110), 10, 500);
+    sscA      = clamp(gaussian(90,   70), 10, 400);
+    fscH      = clamp(fscA * clamp(gaussian(0.90, 0.06), 0.6, 1.1), 10, 500);
+    uv349     = clamp(gaussian(120, 100),  5, 400);
+    ch488_530 = clamp(gaussian(80,   60),  5, 350);
+    ch561_590 = clamp(gaussian(60,   40),  5, 280);
+    ch638_660 = clamp(gaussian(50,   40),  5, 250);
   } else {
-    // Doublets — high FSC-A, low FSC-H/FSC-A ratio
+    // Doublets — high FSC-A, low FSC-H/FSC-A ratio, all channels elevated
     population = 'DOUBLET';
-    fscA  = clamp(gaussian(890, 55),  600, 1000);
-    sscA  = clamp(gaussian(450, 80),  200, 800);
-    fscH  = clamp(fscA * clamp(gaussian(0.58, 0.06), 0.4, 0.78), 100, 1000);
-    uv349 = clamp(gaussian(700, 120), 200, 1000);
+    fscA      = clamp(gaussian(890,  55), 600, 1000);
+    sscA      = clamp(gaussian(450,  80), 200,  800);
+    fscH      = clamp(fscA * clamp(gaussian(0.58, 0.06), 0.4, 0.78), 100, 1000);
+    uv349     = clamp(gaussian(700, 120), 200, 1000);
+    ch488_530 = clamp(gaussian(850,  80), 300, 1000);
+    ch561_590 = clamp(gaussian(400,  90), 100,  800);
+    ch638_660 = clamp(gaussian(200,  70),  50,  600);
   }
 
   const isTarget =
@@ -63,6 +73,7 @@ export function generateCellEvent(gate: SortGate = DEFAULT_GATE): CellEvent {
   return {
     id: eventIdCounter++,
     fscA, fscH, sscA, uv349,
+    ch488_530, ch561_590, ch638_660,
     population,
     isTarget,
   };
@@ -80,4 +91,19 @@ export function generateCellPool(size: number = 3000, gate: SortGate = DEFAULT_G
 export function computeGateEfficiency(pool: CellEvent[]): number {
   const targets = pool.filter(e => e.isTarget).length;
   return targets / pool.length;
+}
+
+/**
+ * Recompute isTarget for every event in the pool based on a new gate.
+ * Returns a new array — does not mutate the original.
+ */
+export function recomputeIsTarget(pool: CellEvent[], gate: SortGate): CellEvent[] {
+  return pool.map(ev => ({
+    ...ev,
+    isTarget:
+      ev.fscA >= gate.fscMin && ev.fscA <= gate.fscMax &&
+      ev.sscA >= gate.sscMin && ev.sscA <= gate.sscMax &&
+      ev.uv349 >= gate.uvMin &&
+      (ev.fscH / ev.fscA) >= gate.singletRatio,
+  }));
 }

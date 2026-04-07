@@ -2,9 +2,9 @@
 // Same architectural pattern as engineStore: bridges useFrame loop ↔ React UI.
 
 import { create } from 'zustand';
-import type { SorterConfig, SortRunState, CellEvent } from '../physics/types';
+import type { SorterConfig, SortRunState, CellEvent, SortGate } from '../physics/types';
 import { DEFAULT_SORTER_CONFIG, initialRunState, DEFAULT_GATE } from '../physics/types';
-import { generateCellPool } from '../physics/FlowCytometryData';
+import { generateCellPool, recomputeIsTarget } from '../physics/FlowCytometryData';
 import { beginSort } from '../physics/SortLogic';
 
 // Pre-generate cell pool once at startup
@@ -17,6 +17,9 @@ interface SorterStore {
   // Cell pool ref (shared between store and simulation loop)
   cellPool: typeof CELL_POOL;
 
+  // Active sort gate (separate from config so it doesn't reset run state)
+  gate: SortGate;
+
   // Derived for UI (throttled from useFrame)
   gateEfficiency: number;
 
@@ -27,6 +30,7 @@ interface SorterStore {
   swapPlate: () => void;
   setConfig: (patch: Partial<SorterConfig>) => void;
   setSelectedWells: (wells: number[] | null) => void;
+  setGate: (gate: SortGate) => void;
 
   // Called by simulation loop (not React)
   updateRunState: (s: SortRunState) => void;
@@ -36,6 +40,7 @@ export const useSorterStore = create<SorterStore>()((set, get) => ({
   config: { ...DEFAULT_SORTER_CONFIG },
   runState: initialRunState(DEFAULT_SORTER_CONFIG),
   cellPool: CELL_POOL,
+  gate: { ...DEFAULT_GATE },
   gateEfficiency: CELL_POOL.filter(e => e.isTarget).length / CELL_POOL.length,
 
   startSort: () => {
@@ -92,6 +97,14 @@ export const useSorterStore = create<SorterStore>()((set, get) => ({
       const sorted = wells ? [...wells].sort((a, b) => a - b) : null;
       const config = { ...s.config, selectedWells: sorted };
       return { config, runState: initialRunState(config) };
+    });
+  },
+
+  setGate: (gate) => {
+    set((s) => {
+      const newPool = recomputeIsTarget(s.cellPool, gate);
+      const gateEfficiency = newPool.filter(e => e.isTarget).length / newPool.length;
+      return { gate, cellPool: newPool, gateEfficiency };
     });
   },
 

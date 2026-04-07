@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { ScatterPlot } from './ScatterPlot';
+import { DoubletPlot } from './DoubletPlot';
 import { PlateMap } from './PlateMap';
 import { SortCounters } from './SortCounters';
 import { VerificationView } from './VerificationView';
@@ -83,6 +84,8 @@ export function BigfootTelemetryPanel() {
           <SortCounters />
           <PlateMap />
           <ScatterPlot />
+          <div style={{ borderTop: '1px solid #1a2030', marginTop: 4 }} />
+          <DoubletPlot />
         </>
       ) : (
         <VerificationView />

@@ -90,7 +90,7 @@ what a successful sort looks like and understand what "100% targeting accuracy" 
 
 ---
 
-## Phase 4 — Interactive Gating + Spectral Channels
+## Phase 4 — Interactive Gating + Spectral Channels (Complete)
 
 **Why:** The instrument is called "Spectral" because it unmixes overlapping fluorescent
 signals from many channels simultaneously. Currently only UV-349 (Hoechst viability) is

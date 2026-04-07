@@ -38,6 +38,9 @@ export interface CellEvent {
   fscH: number;      // Forward Scatter Height — for doublet discrimination
   sscA: number;      // Side Scatter Area — correlates with granularity (0–1000 AU)
   uv349: number;     // 349nm channel — Hoechst 33342 viability stain (0–1000 AU)
+  ch488_530: number; // 488nm laser / 530nm band — FITC / GFP channel (0–1000 AU)
+  ch561_590: number; // 561nm laser / 590nm band — PE channel (0–1000 AU)
+  ch638_660: number; // 638nm laser / 660nm band — APC channel (0–1000 AU)
   population: CellPopulation;
   isTarget: boolean; // passes all gates
 }
